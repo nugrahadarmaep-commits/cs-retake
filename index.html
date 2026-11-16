@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CS RETAKE — Simulasi &amp; Evaluasi Taktik Retake 2D CS2</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">CS2</div>
+        <div>
+          <div class="brand-title">CS RETAKE</div>
+          <div class="brand-sub">2D Tactical Evaluator</div>
+        </div>
+      </div>
+
+      <div class="role-card">
+        <div class="role-meta">
+          <span class="status-dot"></span>
+          <span id="currentUserName">Darma Nugraha</span>
+        </div>
+        <div class="role-row">
+          <span id="currentUserRole" class="role-pill">Pemain</span>
+          <button id="btnOpenAuth" class="btn-mini">Ganti Akun</button>
+        </div>
+      </div>
+
+      <nav class="nav-menu" id="navMenu">
+        <button class="nav-item active" data-view="dashboard">
+          <span>◈</span> Dashboard &amp; Statistik
+        </button>
+        <button class="nav-item" data-view="scenarios">
+          <span>◫</span> Pilih Map &amp; Skenario
+        </button>
+        <button class="nav-item" data-view="simulator">
+          <span>◎</span> Simulasi Taktik 2D
+        </button>
+        <button class="nav-item" data-view="evaluation">
+          <span>✦</span> Hasil Evaluasi Taktik
+        </button>
+        <button class="nav-item" data-view="history">
+          <span>≣</span> Riwayat &amp; Bandingkan
+        </button>
+        <div class="nav-divider admin-only hidden">MENU ADMIN</div>
+        <button class="nav-item admin-only hidden" data-view="admin">
+          <span>⚙</span> Panel Kelola Admin
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="small-note">Praktikum RPL — FST UMSIDA</div>
+        <button id="btnLogout" class="btn-outline-danger full-w">Logout Sesi</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-area">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Dashboard Pemain</h1>
+          <p id="pageSubtitle" class="muted">Ringkasan latihan simulasi retake 2D Counter-Strike 2</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="chip" id="activeScenarioChip">Skenario: Mirage — A Site Retake (3v2)</span>
+          <button class="btn-primary" id="btnQuickSim">+ Mulai Simulasi 2D</button>
+        </div>
+      </header>
+
+      <!-- VIEW 1: DASHBOARD -->
+      <section id="view-dashboard" class="view active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Simulasi Retake</div>
+            <div class="kpi-val" id="kpiTotalSim">4</div>
+            <div class="kpi-foot accent-cyan">Tersimpan di riwayat</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Rata-Rata Skor Taktik</div>
+            <div class="kpi-val" id="kpiAvgScore">78.5</div>
+            <div class="kpi-foot accent-amber">Target kompetitif &ge; 80</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Skor Tertinggi</div>
+            <div class="kpi-val" id="kpiBestScore">91</div>
+            <div class="kpi-foot accent-green">Grade A — Optimal</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Map Tersedia</div>
+            <div class="kpi-val" id="kpiMapCount">3</div>
+            <div class="kpi-foot">Mirage, Inferno, Dust 2</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-hdr">
+              <h2>Skenario Retake Populer</h2>
+              <button class="btn-link" data-goto="scenarios">Lihat Semua &rarr;</button>
+            </div>
+            <div id="dashScenarioList" class="card-stack"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-hdr">
+              <h2>Evaluasi Terakhir</h2>
+              <button class="btn-link" data-goto="history">Buka Riwayat &rarr;</button>
+            </div>
+            <div id="dashRecentList" class="card-stack"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: MAP & SKENARIO -->
+      <section id="view-scenarios" class="view">
+        <div class="filter-bar panel">
+          <div class="filter-group">
+            <label>Filter Map CS2:</label>
+            <select id="filterMap">
+              <option value="ALL">Semua Map</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Tingkat Kesulitan:</label>
+            <select id="filterDiff">
+              <option value="ALL">Semua Tingkat</option>
+              <option value="Pemula">Pemula</option>
+              <option value="Menengah">Menengah</option>
+              <option value="Kompetitif">Kompetitif</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="scenarioCatalog" class="scenario-grid"></div>
+      </section>
+
+      <!-- VIEW 3: SIMULASI TAKTIK 2D -->
+      <section id="view-simulator" class="view">
+        <div class="sim-layout">
+          <!-- Left Toolbox -->
+          <div class="sim-tools panel">
+            <h3>Alat Penyusun Taktik</h3>
+            <div class="tool-list" id="toolList">
+              <button class="tool-btn active" data-tool="ct">
+                <span class="dot-ct"></span> Unit CT (<span id="ctCountLabel">0</span>/3)
+              </button>
+              <button class="tool-btn" data-tool="path">
+                <span class="dot-path"></span> Jalur Gerak (Waypoint)
+              </button>
+              <button class="tool-btn" data-tool="smoke">
+                <span class="dot-smoke"></span> Smoke Grenade
+              </button>
+              <button class="tool-btn" data-tool="flash">
+                <span class="dot-flash"></span> Flashbang
+              </button>
+              <button class="tool-btn" data-tool="molotov">
+                <span class="dot-molly"></span> Molotov
+              </button>
+              <button class="tool-btn" data-tool="he">
+                <span class="dot-he"></span> HE Grenade
+              </button>
+            </div>
+
+            <div class="tool-actions">
+              <button id="btnLoadPreset" class="btn-secondary full-w">⚡ Muat Preset Taktik Pro</button>
+              <button id="btnUndoTool" class="btn-outline full-w">↶ Hapus Item Terakhir</button>
+              <button id="btnResetCanvas" class="btn-outline-danger full-w">✕ Reset Kanvas 2D</button>
+            </div>
+
+            <div class="sim-legend">
+              <h4>Legenda Radar 2D</h4>
+              <div><span class="leg-box ct"></span> Unit CT (Counter-Terrorist)</div>
+              <div><span class="leg-box t"></span> Posisi Musuh (Terrorist) + Sightline</div>
+              <div><span class="leg-box c4"></span> C4 Bomb Planted</div>
+              <div><span class="leg-box smk"></span> Area Smoke (Blokir Pandangan)</div>
+              <div><span class="leg-box fls"></span> Area Flash / Molotov / HE</div>
+            </div>
+          </div>
+
+          <!-- Center 2D Tactical Canvas -->
+          <div class="sim-canvas-wrap panel">
+            <div class="canvas-topbar">
+              <div>
+                <strong id="simScenTitle">Mirage — Retake Site A (3 CT vs 2 T)</strong>
+                <span class="muted" id="simScenMeta">Bomb Timer: 40s | Kesulitan: Menengah</span>
+              </div>
+              <div class="timer-pill">
+                Simulasi: <span id="simTimeReadout">0.0s</span> / 15.0s
+              </div>
+            </div>
+
+            <div class="canvas-stage">
+              <canvas id="tacticalCanvas" width="760" height="520"></canvas>
+            </div>
+
+            <div class="playback-bar">
+              <div class="pb-left">
+                <button id="btnPlaySim" class="btn-primary">▶ Jalankan Simulasi</button>
+                <button id="btnPauseSim" class="btn-outline">⏸ Jeda</button>
+                <button id="btnStopSim" class="btn-outline">↺ Ulang (0s)</button>
+              </div>
+              <input type="range" id="simScrubber" min="0" max="15" step="0.1" value="0" />
+              <button id="btnEvaluateNow" class="btn-amber">Evaluasi Taktik &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: HASIL EVALUASI TAKTIK -->
+      <section id="view-evaluation" class="view">
+        <div class="eval-grid">
+          <div class="panel score-hero">
+            <div class="muted">SKOR TAKTIK RETAKE</div>
+            <div class="score-circle">
+              <span id="evalTotalScore">0</span>
+              <small>/ 100</small>
+            </div>
+            <div class="grade-row">
+              <span class="grade-badge" id="evalGradeBadge">-</span>
+              <span class="status-badge" id="evalStatusBadge">Belum Dievaluasi</span>
+            </div>
+            <p id="evalScenarioName" class="muted">Jalankan simulasi pada kanvas 2D lalu klik Evaluasi Taktik.</p>
+            <div class="eval-actions">
+              <button id="btnSaveEval" class="btn-primary">Simpan ke Riwayat</button>
+              <button id="btnBackToSim" class="btn-outline">Perbaiki di Kanvas 2D</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Rincian Kriteria Penilaian (Rule-Based)</h2>
+            <div class="metric-list" id="evalMetricsList">
+              <div class="metric-item">
+                <div class="metric-head">
+                  <span>1. Cakupan Utility (Utility Coverage)</span>
+                  <strong id="mUtilVal">0 / 100</strong>
+                </div>
+                <div class="progress"><div id="mUtilBar" class="progress-fill cyan" style="width:0%"></div></div>
+                <small class="muted" id="mUtilNote">Menilai penutupan jalur pandang musuh oleh Smoke &amp; gangguan area oleh Flash/Molotov.</small>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-head">
+                  <span>2. Crossfire &amp; Sudut Masuk (Entry Angle)</span>
+                  <strong id="mCrossVal">0 / 100</strong>
+                </div>
+                <div class="progress"><div id="mCrossBar" class="progress-fill amber" style="width:0%"></div></div>
+                <small class="muted" id="mCrossNote">Menilai penyebaran unit CT agar menyerang dari beberapa arah (tidak menumpuk 1 pintu).</small>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-head">
+                  <span>3. Margin Waktu Defuse (Timing Margin)</span>
+                  <strong id="mTimeVal">0 / 100</strong>
+                </div>
+                <div class="progress"><div id="mTimeBar" class="progress-fill green" style="width:0%"></div></div>
+                <small class="muted" id="mTimeNote">Menilai kecukupan durasi jalur menuju C4 dibanding sisa waktu bomb timer.</small>
+              </div>
+            </div>
+
+            <div class="rec-box">
+              <h3>Rekomendasi Perbaikan Taktik</h3>
+              <ul id="evalRecList">
+                <li>Belum ada data evaluasi. Silakan susun taktik pada menu Simulasi Taktik 2D.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: RIWAYAT & PERBANDINGAN -->
+      <section id="view-history" class="view">
+        <div class="panel">
+          <div class="panel-hdr">
+            <div>
+              <h2>Riwayat Evaluasi Taktik</h2>
+              <p class="muted">Centang 2 riwayat untuk membandingkan efektivitas taktik secara berdampingan.</p>
+            </div>
+            <button id="btnCompareSelected" class="btn-amber">Bandingkan 2 Terpilih</button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pilih</th>
+                  <th>Tanggal</th>
+                  <th>Map &amp; Skenario</th>
+                  <th>Utility</th>
+                  <th>Crossfire</th>
+                  <th>Timing</th>
+                  <th>Skor Total</th>
+                  <th>Grade</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="comparePanel" class="panel hidden" style="margin-top: 16px;">
+          <div class="panel-hdr">
+            <h2>Perbandingan Dua Taktik Evaluasi</h2>
+            <button id="btnCloseCompare" class="btn-outline">Tutup</button>
+          </div>
+          <div id="compareGrid" class="grid-2"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: PANEL ADMIN -->
+      <section id="view-admin" class="view">
+        <div class="admin-tabs">
+          <button class="tab-btn active" data-tab="maps">Kelola Map CS2</button>
+          <button class="tab-btn" data-tab="scenarios">Kelola Skenario Retake</button>
+          <button class="tab-btn" data-tab="criteria">Bobot Kriteria Evaluasi</button>
+          <button class="tab-btn" data-tab="users">Kelola Data Pengguna</button>
+        </div>
+
+        <!-- Tab Maps -->
+        <div id="tab-maps" class="panel admin-tab active">
+          <div class="panel-hdr">
+            <h2>Master Data Map CS2</h2>
+          </div>
+          <form id="formAddMap" class="inline-form">
+            <input type="text" id="inMapKode" placeholder="Kode (mis. de_nuke)" required />
+            <input type="text" id="inMapNama" placeholder="Nama Map (mis. Nuke)" required />
+            <input type="number" step="0.1" id="inMapSkala" placeholder="Skala Meter" value="1.0" required />
+            <button type="submit" class="btn-primary">+ Tambah Map</button>
+          </form>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Kode Map</th><th>Nama Map</th><th>Skala</th><th>Aksi</th></tr></thead>
+              <tbody id="adminMapBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab Scenarios -->
+        <div id="tab-scenarios" class="panel admin-tab">
+          <div class="panel-hdr">
+            <h2>Master Data Skenario Retake</h2>
+          </div>
+          <form id="formAddScenario" class="inline-form">
+            <select id="inScenMap"></select>
+            <input type="text" id="inScenNama" placeholder="Nama Skenario (mis. Retake B Apps)" required />
+            <select id="inScenSite"><option value="A">Site A</option><option value="B">Site B</option></select>
+            <input type="number" id="inScenTimer" placeholder="Timer (detik)" value="40" min="15" max="45" required />
+            <select id="inScenDiff">
+              <option value="Pemula">Pemula</option>
+              <option value="Menengah">Menengah</option>
+              <option value="Kompetitif">Kompetitif</option>
+            </select>
+            <button type="submit" class="btn-primary">+ Tambah Skenario</button>
+          </form>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Map</th><th>Nama Skenario</th><th>Site</th><th>Timer</th><th>Kesulitan</th><th>Aksi</th></tr></thead>
+              <tbody id="adminScenBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab Criteria -->
+        <div id="tab-criteria" class="panel admin-tab">
+          <div class="panel-hdr">
+            <h2>Pengaturan Bobot Kriteria Evaluasi</h2>
+            <span class="chip">Total Bobot Harus = 100%</span>
+          </div>
+          <form id="formUpdateCriteria" class="criteria-form">
+            <div class="crit-row">
+              <label>Cakupan Utility (%)</label>
+              <input type="number" id="wUtil" min="10" max="80" value="40" />
+            </div>
+            <div class="crit-row">
+              <label>Crossfire &amp; Sudut Masuk (%)</label>
+              <input type="number" id="wCross" min="10" max="80" value="35" />
+            </div>
+            <div class="crit-row">
+              <label>Margin Waktu Defuse (%)</label>
+              <input type="number" id="wTime" min="10" max="80" value="25" />
+            </div>
+            <button type="submit" class="btn-primary">Simpan Bobot Kriteria</button>
+          </form>
+        </div>
+
+        <!-- Tab Users -->
+        <div id="tab-users" class="panel admin-tab">
+          <div class="panel-hdr"><h2>Manajemen Pengguna Sistem</h2></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>ID</th><th>Username</th><th>Nama Lengkap</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
+              <tbody id="adminUserBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- AUTH / LOGIN MODAL -->
+  <div id="authModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <h2>Masuk ke CS RETAKE</h2>
+        <button id="btnCloseAuth" class="btn-mini">✕</button>
+      </div>
+      <p class="muted" style="margin-bottom:12px;">Pilih akun demo cepat untuk menguji hak akses Pemain atau Admin, atau masukkan kredensial.</p>
+      <div class="demo-switch">
+        <button id="btnDemoPlayer" class="btn-primary">Masuk sebagai Pemain (Darma)</button>
+        <button id="btnDemoAdmin" class="btn-amber">Masuk sebagai Admin Lab</button>
+      </div>
+      <hr class="sep" />
+      <form id="formLogin">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="darma_cs2" required />
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" required />
+        <button type="submit" class="btn-secondary full-w" style="margin-top:10px;">Login &amp; Validasi Sesi</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
